@@ -126,7 +126,7 @@ Infinite_Loop:
 * 0x0000.0000.
 *
 ******************************************************************************/
-   .section .vectors,"a",%progbits
+   .section .isr_vector,"a",%progbits
   .type g_pfnVectors, %object
   .size g_pfnVectors, .-g_pfnVectors
 

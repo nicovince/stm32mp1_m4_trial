@@ -10,13 +10,13 @@ AFILES_ST += startup_stm32mp15xx.S
 
 OBJS_ST = $(OBJS)
 OBJS_ST += $(AFILES_ST:%.S=$(BUILD_DIR)/%.o)
-LDSCRIPT_ST = STM32MP157CAAX_RAM.ld
+LDSCRIPT_ST = stm32mp15xx_m4.ld
 TGT_LDFLAGS_ST += -T$(LDSCRIPT_ST) -L$(OPENCM3_DIR)/lib -nostartfiles
 TGT_LDFLAGS_ST += $(ARCH_FLAGS)
-TGT_LDFLAGS_ST += -specs=nano.specs
+TGT_LDFLAGS_ST += -specs=nosys.specs -specs=nano.specs
 TGT_LDFLAGS_ST += -Wl,--gc-sections
 # OPTIONAL
-#TGT_LDFLAGS_ST += -Wl,-Map=$(PROJECT).map
+TGT_LDFLAGS_ST += -Wl,-Map=$(PROJECT_ST).map
 ifeq ($(V),99)
 TGT_LDFLAGS_ST += -Wl,--print-gc-sections
 endif

@@ -12,19 +12,20 @@
 **
 **  Target      : STMicroelectronics STM32
 **
-**  Distribution: The file is distributed as is, without any warranty
+**  Distribution: The file is distributed “as is,” without any warranty
 **                of any kind.
 **
 *****************************************************************************
 ** @attention
-**
+ 
 ** <h2><center>&copy; Copyright (c) 2019 STMicroelectronics. 
 ** All rights reserved.</center></h2>
 **
 ** This software component is licensed by ST under BSD 3-Clause license,
-** the License; You may not use this file except in compliance with the 
+** the "License"; You may not use this file except in compliance with the 
 ** License. You may obtain a copy of the License at:
 **                       opensource.org/licenses/BSD-3-Clause
+**
 **
 *****************************************************************************
 */
@@ -35,8 +36,8 @@ ENTRY(Reset_Handler)
 /* Highest address of the user mode stack */
 _estack = 0x10040000;    /* end of RAM */
 
-_Min_Heap_Size = 0x100 ;  /* required amount of heap  */
-_Min_Stack_Size = 0x200 ; /* required amount of stack */
+_Min_Heap_Size = 0x200;      /* required amount of heap  */
+_Min_Stack_Size = 0x400; /* required amount of stack */
 
 /* Memories definition */
 MEMORY
@@ -49,16 +50,16 @@ MEMORY
 
  /* Symbols needed for OpenAMP to enable rpmsg */
 __OPENAMP_region_start__  = ORIGIN(m_ipc_shm);
-__OPENAMP_region_end__ = ORIGIN(m_ipc_shm)+LENGTH(m_ipc_shm);
+__OPENAMP_region_length__ = LENGTH(m_ipc_shm);
 
 /* Sections */
 SECTIONS
 {
   /* The startup code into ROM memory */
-  .vectors :
+  .isr_vector :
   {
     . = ALIGN(4);
-    KEEP(*(.vectors)) /* Startup code */
+    KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
   } > m_interrupts
  
