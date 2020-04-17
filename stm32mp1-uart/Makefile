@@ -5,6 +5,7 @@ SHARED_DIR = ../common
 CFILES = main.c
 CFILES += api.c
 CFILES += clock.c
+CFILES += usart.c
 AFILES += api-asm.S
 
 # TODO - you will need to edit these two lines!
