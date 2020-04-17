@@ -19,7 +19,11 @@ void sys_tick_handler(void)
     system_millis++;
 }
 
-
+static void msleep(uint32_t sleep_ms)
+{
+    uint32_t start_ms = system_millis;
+    while (start_ms + sleep_ms > system_millis);
+}
 
 static void dirty_wait(void)
 {
@@ -39,15 +43,15 @@ static void systick_setup(void)
 
 int main(void) {
     uint32_t last_ts = 0;
+    systick_setup();
     rcc_periph_clock_enable(RCC_LED7);
     gpio_mode_setup(PORT_LED7, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, GPIO_LED7);
     gpio_set_output_options(PORT_LED7, GPIO_OTYPE_PP,
                             GPIO_OSPEED_25MHZ,  GPIO_LED7);
     gpio_set(PORT_LED7, GPIO_LED7);
-    dirty_wait();
+    msleep(1000);
     gpio_clear(PORT_LED7, GPIO_LED7);
-    dirty_wait();
-    systick_setup();
+    msleep(1000);
     while(1) {
         if (last_ts + 1000 < system_millis) {
             last_ts = system_millis;
