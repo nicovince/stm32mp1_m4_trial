@@ -48,3 +48,11 @@ echo stop > /sys/class/remoteproc/remoteproc0/state
 | Tx       | pin 8      |
 | Rx       | Pin 10     |
 
+## SPI
+| function | SPI4    | SPI6    |
+| -------- | ------- | ------- |
+| NSS      | CN13[3] | CN2[24] |
+| SCK      | CN13[6] | CN2[23] |
+| MOSI     | CN13[4] | CN2[19] |
+| MISO     | CN13[5] | CN2[21] |
+

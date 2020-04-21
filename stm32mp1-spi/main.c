@@ -1,10 +1,12 @@
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/usart.h>
+#include <libopencm3/stm32/spi.h>
 #include <libopencm3/cm3/nvic.h>
 
 #include "clock.h"
 #include "usart.h"
+#include "spi.h"
 
 #include "api.h"
 #include "api-asm.h"
@@ -33,8 +35,9 @@ static void blink(uint8_t n)
 int main(void) {
     uint32_t last_ts = 0;
     struct usart_cfg usart3_cfg;
-    uint32_t uart35clksel;
-    uint32_t hsidiv;
+    uint32_t spi_data;
+    uint32_t cnt = 0;
+    uint32_t spi_sr;
 
     usart3_cfg.usart_base = USART3;
     usart3_cfg.clken = RCC_USART3;
@@ -53,43 +56,38 @@ int main(void) {
     usart3_cfg.flowcontrol = USART_FLOWCONTROL_NONE;
     usart_setup(&usart3_cfg);
 
+
     systick_setup();
     rcc_periph_clock_enable(RCC_LED7);
     gpio_mode_setup(PORT_LED7, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, GPIO_LED7);
     gpio_set_output_options(PORT_LED7, GPIO_OTYPE_PP,
                             GPIO_OSPEED_25MHZ,  GPIO_LED7);
-    gpio_set(PORT_LED7, GPIO_LED7);
-    msleep(1000);
-    gpio_clear(PORT_LED7, GPIO_LED7);
-    msleep(1000);
-    usart_send_blocking_str(USART3, "Hello World\r\n");
 
-    uart35clksel = RCC_UART35CKSELR & (RCC_UART35CKSELR_UART35SRC_MASK << RCC_UART35CKSELR_UART35SRC_SHIFT);
-    hsidiv = RCC_HSICFGR & (RCC_HSICFGR_HSIDIV_MASK << RCC_HSICFGR_HSIDIV_SHIFT);
+    spi4_setup();
+    usart_send_blocking_str(USART3, "Hello World\r\n");
+    usart_send_blocking_printf(USART3, "CR1:%x\r\n", SPI2S_CR1(SPI4));
+    usart_send_blocking_printf(USART3, "CFG1:%x\r\n", SPI_CFG1(SPI4));
+    usart_send_blocking_printf(USART3, "CFG2:%x\r\n", SPI_CFG2(SPI4));
+    usart_send_blocking_printf(USART3, "SPI2S_SR: %x\r\n", SPI2S_SR(SPI4));
+
     while(1) {
         if (last_ts + 5000 < mtime()) {
-            switch (uart35clksel) {
-            case RCC_UART35CKSELR_UART35SRC_PCLK1:
-                blink(1);
-                break;
-            case RCC_UART35CKSELR_UART35SRC_PLL4_Q:
-                blink(2);
-                break;
-            case RCC_UART35CKSELR_UART35SRC_HSI:
-                blink(3);
-                break;
-            case RCC_UART35CKSELR_UART35SRC_CSI:
-                blink(4);
-                break;
-            case RCC_UART35CKSELR_UART35SRC_HSE:
-                blink(5);
-                break;
-            default:
-                break;
+            usart_send_blocking_printf(USART3, "----- [%d] -----\r\n", mtime());
+            gpio_toggle(PORT_LED7, GPIO_LED7);
+            spi_write8(SPI4, cnt++);
+            spi_write8(SPI4, cnt++);
+            spi_write8(SPI4, cnt++);
+            usart_send_blocking_printf(USART3, "spidata = %d\r\n", mtime(), spi_data);
+            usart_send_blocking_printf(USART3, "CR1:%x\r\n", SPI2S_CR1(SPI4));
+            usart_send_blocking_printf(USART3, "CR2:%x\r\n", SPI_CR2(SPI4));
+            usart_send_blocking_printf(USART3, "CFG1:%x\r\n", SPI_CFG1(SPI4));
+            usart_send_blocking_printf(USART3, "CFG2:%x\r\n", SPI_CFG2(SPI4));
+            spi_sr = SPI2S_SR(SPI4);
+            usart_send_blocking_printf(USART3, "SPI2S_SR: %x\r\n", spi_sr);
+            if (spi_sr & SPI2S_SR_EOT) {
+                spi_clear_flags(SPI4, SPI2S_IFCR_EOTC | SPI2S_IFCR_TXTFC);
             }
-            msleep(2000);
-            blink(hsidiv + 1);
-            usart_send_blocking_str(USART3, "Hop\r\n");
+            usart_send_blocking_printf(USART3, "SPI2S_SR: %x\r\n", SPI2S_SR(SPI4));
             last_ts = mtime();
 
         }
