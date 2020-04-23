@@ -7,7 +7,9 @@
 
 void usart_send_blocking_str(uint32_t usart_base, const char *str);
 void usart_send_blocking_buf(uint32_t usart_base, const char *str, size_t len);
+void usart_send_buf(uint32_t usart_base, const char *str, size_t len);
 int usart_send_blocking_printf(uint32_t usart_base, char const *fmt, ...);
+int usart_send_printf(uint32_t usart_base, const char *fmt, ...);
 
 void usart3_setup(void);
 #endif /* __USART_H__ */

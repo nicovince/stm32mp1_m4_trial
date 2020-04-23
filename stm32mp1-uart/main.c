@@ -22,46 +22,22 @@
 
 int main(void) {
     uint32_t last_ts = 0;
-    uint32_t uart35clksel;
-    uint32_t hsidiv;
+    systick_setup();
+
+    led_setup();
+    led_off();
+    msleep(500);
+    led_on();
+    msleep(500);
+    led_off();
 
     usart3_setup();
 
-    systick_setup();
-    led_setup();
+    usart_send_printf(USART3, "Hello World\r\n");
 
-    led_on();
-    msleep(1000);
-    led_off();
-    msleep(1000);
-    usart_send_blocking_str(USART3, "Hello World\r\n");
-
-    uart35clksel = RCC_UART35CKSELR & (RCC_UART35CKSELR_UART35SRC_MASK << RCC_UART35CKSELR_UART35SRC_SHIFT);
-    hsidiv = RCC_HSICFGR & (RCC_HSICFGR_HSIDIV_MASK << RCC_HSICFGR_HSIDIV_SHIFT);
     while(1) {
-        if (last_ts + 5000 < mtime()) {
-            switch (uart35clksel) {
-            case RCC_UART35CKSELR_UART35SRC_PCLK1:
-                led_blink(1);
-                break;
-            case RCC_UART35CKSELR_UART35SRC_PLL4_Q:
-                led_blink(2);
-                break;
-            case RCC_UART35CKSELR_UART35SRC_HSI:
-                led_blink(3);
-                break;
-            case RCC_UART35CKSELR_UART35SRC_CSI:
-                led_blink(4);
-                break;
-            case RCC_UART35CKSELR_UART35SRC_HSE:
-                led_blink(5);
-                break;
-            default:
-                break;
-            }
-            msleep(2000);
-            led_blink(hsidiv + 1);
-            usart_send_blocking_str(USART3, "Hop\r\n");
+        if (last_ts + 3000 < mtime()) {
+            usart_send_printf(USART3, "Hop\r\n");
             last_ts = mtime();
 
         }

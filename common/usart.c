@@ -9,6 +9,7 @@
 
 #include "usart.h"
 #include "fifo.h"
+#include "led.h"
 
 #define PORT_USART3_TX GPIOB
 #define PIN_USART3_TX 10
@@ -19,6 +20,7 @@ struct usart_setup_cfg
 {
     uint32_t usart_base;
     enum rcc_periph_clken clken;
+    enum rcc_periph_rst reset;
     uint32_t port_tx;
     uint8_t pin_tx;
     uint8_t alt_func_tx;
@@ -40,6 +42,8 @@ struct usart_cfg {
     uint32_t usart;
 };
 
+struct usart_cfg usart3_cfg;
+
 void itoa(int n, char *buf, size_t len);
 
 #define USART3_FIFO_SZ 1024
@@ -48,10 +52,19 @@ uint8_t usart3_array_tx[USART3_FIFO_SZ];
 struct fifo usart3_fifo_rx;
 uint8_t usart3_array_rx[USART3_FIFO_SZ];
 
+static struct usart_cfg * get_usart_cfg(uint32_t usart_base)
+{
+    if (usart_base == usart3_cfg.usart) {
+        return &usart3_cfg;
+    }
+    return NULL;
+}
+
 static void usart_setup(struct usart_setup_cfg *cfg)
 {
     uint16_t gpio_tx = (1 << cfg->pin_tx);
     uint16_t gpio_rx = (1 << cfg->pin_rx);
+    rcc_periph_reset_pulse(cfg->reset);
     rcc_periph_clock_enable(RCC_GPIOB);
     rcc_periph_clock_enable(cfg->clken);
     nvic_enable_irq(cfg->irqn);
@@ -70,33 +83,38 @@ static void usart_setup(struct usart_setup_cfg *cfg)
     usart_set_parity(cfg->usart_base, cfg->parity);
     usart_set_flow_control(cfg->usart_base, cfg->flowcontrol);
 
-    //usart_enable_rx_interrupt(cfg->usart_base);
+    usart_enable_rx_interrupt(cfg->usart_base);
     usart_enable(cfg->usart_base);
 }
 
 void usart3_setup(void)
 {
-    struct usart_setup_cfg usart3_cfg;
+    struct usart_setup_cfg setup_cfg;
 
-    usart3_cfg.usart_base = USART3;
-    usart3_cfg.clken = RCC_USART3;
-    usart3_cfg.port_tx = PORT_USART3_TX;
-    usart3_cfg.pin_tx = PIN_USART3_TX;
-    usart3_cfg.alt_func_tx = GPIO_AF7;
-    usart3_cfg.port_rx = PORT_USART3_RX;
-    usart3_cfg.pin_rx = PIN_USART3_RX;
-    usart3_cfg.alt_func_rx = GPIO_AF8;
-    usart3_cfg.irqn = NVIC_USART3_IRQ;
-    usart3_cfg.baudrate = 115200;
-    usart3_cfg.databits = 8;
-    usart3_cfg.stopbits = USART_STOPBITS_1;
-    usart3_cfg.mode = USART_MODE_TX_RX;
-    usart3_cfg.parity = USART_PARITY_NONE;
-    usart3_cfg.flowcontrol = USART_FLOWCONTROL_NONE;
+    setup_cfg.usart_base = USART3;
+    setup_cfg.clken = RCC_USART3;
+    setup_cfg.reset = RST_USART3;
+    setup_cfg.port_tx = PORT_USART3_TX;
+    setup_cfg.pin_tx = PIN_USART3_TX;
+    setup_cfg.alt_func_tx = GPIO_AF7;
+    setup_cfg.port_rx = PORT_USART3_RX;
+    setup_cfg.pin_rx = PIN_USART3_RX;
+    setup_cfg.alt_func_rx = GPIO_AF8;
+    setup_cfg.irqn = NVIC_USART3_IRQ;
+    setup_cfg.baudrate = 115200;
+    setup_cfg.databits = 8;
+    setup_cfg.stopbits = USART_STOPBITS_1;
+    setup_cfg.mode = USART_MODE_TX_RX;
+    setup_cfg.parity = USART_PARITY_NONE;
+    setup_cfg.flowcontrol = USART_FLOWCONTROL_NONE;
 
-    usart_setup(&usart3_cfg);
+    usart_setup(&setup_cfg);
     fifo_create(&usart3_fifo_tx, usart3_array_tx, sizeof(usart3_array_tx[0]), USART3_FIFO_SZ);
     fifo_create(&usart3_fifo_rx, usart3_array_rx, sizeof(usart3_array_rx[0]), USART3_FIFO_SZ);
+
+    usart3_cfg.rx_fifo = &usart3_fifo_rx;
+    usart3_cfg.tx_fifo = &usart3_fifo_tx;
+    usart3_cfg.usart = setup_cfg.usart_base;
 }
 
 void usart_send_blocking_str(uint32_t usart_base, const char *str)
@@ -106,11 +124,26 @@ void usart_send_blocking_str(uint32_t usart_base, const char *str)
     }
 }
 
+//TODO: return number of sent bytes
 void usart_send_blocking_buf(uint32_t usart_base, const char *str, size_t len)
 {
     for (size_t i = 0; i < len; ++i) {
         usart_send_blocking(usart_base, str[i]);
     }
+}
+
+void usart_send_buf(uint32_t usart_base, const char *str, size_t len)
+{
+    size_t i = 0;
+    struct usart_cfg * usart_cfg = get_usart_cfg(usart_base);
+    if (usart_cfg == NULL) {
+        return;
+    }
+
+    while(len--) {
+        fifo_push(usart_cfg->tx_fifo, &str[i]);
+    }
+    usart_enable_tx_interrupt(usart_cfg->usart);
 }
 
 typedef void (*usart_send_fn)(uint32_t, const char *str, size_t len);
@@ -196,4 +229,47 @@ int usart_send_blocking_printf(uint32_t usart_base, const char *fmt, ...)
     va_start(arg, fmt);
 
     return usart_send_generic_printf(usart_base, &usart_send_blocking_buf, fmt, arg);
+}
+
+int usart_send_printf(uint32_t usart_base, const char *fmt, ...)
+{
+    va_list arg;
+    va_start(arg, fmt);
+
+    return usart_send_generic_printf(usart_base, &usart_send_buf, fmt, arg);
+}
+
+static void uartx_isr(struct usart_cfg * usart_cfg)
+{
+    uint32_t usart_base = usart_cfg->usart;
+    struct fifo * tx_fifo = usart_cfg->tx_fifo;
+    struct fifo * rx_fifo = usart_cfg->rx_fifo;
+    uint8_t data;
+    /* Check if we were called because of RXNE. */
+    if (((USART_CR1(usart_base) & USART_CR1_RXNEIE) != 0) &&
+        ((USART_ISR(usart_base) & USART_FLAG_RXNE) != 0)) {
+        /* Retrieve the data from the peripheral, and store it in rx fifo. */
+        data = usart_recv(usart_base);
+        fifo_push(rx_fifo, &data);
+    }
+
+    /* Check if we were called because of TXE. */
+    if (((USART_CR1(usart_base) & USART_CR1_TXEIE) != 0) &&
+        ((USART_ISR(usart_base) & USART_FLAG_TXE) != 0)) {
+
+        if (!fifo_is_empty(tx_fifo))
+        {
+            fifo_pop(tx_fifo, &data);
+            /* Put data into the transmit register. */
+            usart_send(usart_base, data);
+        } else {
+            /* Disable the TXE interrupt as we don't need it anymore. */
+            usart_disable_tx_interrupt(usart_base);
+        }
+    }
+}
+
+void usart3_isr(void)
+{
+    uartx_isr(&usart3_cfg);
 }

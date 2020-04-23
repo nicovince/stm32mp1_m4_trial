@@ -46,7 +46,7 @@ bool fifo_is_full(struct fifo * fifo)
     return ((fifo->wr_ptr == fifo->rd_ptr) && (fifo->rd_flag != fifo->wr_flag));
 }
 
-bool fifo_push(struct fifo * fifo, void * elt)
+bool fifo_push(struct fifo * fifo, const void * elt)
 {
     bool ret_fifo_push = false;
 
