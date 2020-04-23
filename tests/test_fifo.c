@@ -8,7 +8,7 @@
 /* Fifo under test */
 struct fut
 {
-    struct fifo_struct fifo;
+    struct fifo fifo;
     void *tab;
 };
 

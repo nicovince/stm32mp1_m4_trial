@@ -10,7 +10,7 @@ static void toggle_flag(bool *flag)
     }
 }
 
-void fifo_create(struct fifo_struct * fifo, void * tab, size_t size_elt, size_t size_fifo)
+void fifo_create(struct fifo * fifo, void * tab, size_t size_elt, size_t size_fifo)
 {
     fifo->tab = tab;
     fifo->size_elt = size_elt;
@@ -21,7 +21,7 @@ void fifo_create(struct fifo_struct * fifo, void * tab, size_t size_elt, size_t 
     fifo->wr_flag = false;
 }
 
-size_t fifo_level(struct fifo_struct * fifo)
+size_t fifo_level(struct fifo * fifo)
 {
     if (fifo->wr_ptr == fifo->rd_ptr) {
         if (fifo->wr_flag == fifo->rd_flag) {
@@ -36,17 +36,17 @@ size_t fifo_level(struct fifo_struct * fifo)
     }
 }
 
-bool fifo_is_empty(struct fifo_struct * fifo)
+bool fifo_is_empty(struct fifo * fifo)
 {
     return ((fifo->wr_ptr == fifo->rd_ptr) && (fifo->rd_flag == fifo->wr_flag));
 }
 
-bool fifo_is_full(struct fifo_struct * fifo)
+bool fifo_is_full(struct fifo * fifo)
 {
     return ((fifo->wr_ptr == fifo->rd_ptr) && (fifo->rd_flag != fifo->wr_flag));
 }
 
-bool fifo_push(struct fifo_struct * fifo, void * elt)
+bool fifo_push(struct fifo * fifo, void * elt)
 {
     bool ret_fifo_push = false;
 
@@ -64,7 +64,7 @@ bool fifo_push(struct fifo_struct * fifo, void * elt)
     return ret_fifo_push;
 }
 
-bool fifo_pop(struct fifo_struct * fifo, void * elt)
+bool fifo_pop(struct fifo * fifo, void * elt)
 {
     bool ret_fifo_pop = false;
 
