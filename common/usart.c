@@ -141,7 +141,7 @@ void usart_send_buf(uint32_t usart_base, const char *str, size_t len)
     }
 
     while(len--) {
-        fifo_push(usart_cfg->tx_fifo, &str[i]);
+        fifo_push(usart_cfg->tx_fifo, &str[i++]);
     }
     usart_enable_tx_interrupt(usart_cfg->usart);
 }

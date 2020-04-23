@@ -37,7 +37,7 @@ int main(void) {
 
     while(1) {
         if (last_ts + 3000 < mtime()) {
-            usart_send_printf(USART3, "Hop\r\n");
+            usart_send_printf(USART3, "mtime: %d\r\n", mtime());
             last_ts = mtime();
 
         }
