@@ -8,8 +8,41 @@
 #include <stdlib.h>
 
 #include "usart.h"
+#include "fifo.h"
 
-void usart_setup(struct usart_cfg *cfg)
+#define PORT_USART3_TX GPIOB
+#define PIN_USART3_TX 10
+#define PORT_USART3_RX GPIOB
+#define PIN_USART3_RX 12
+
+struct usart_setup_cfg
+{
+    uint32_t usart_base;
+    enum rcc_periph_clken clken;
+    uint32_t port_tx;
+    uint8_t pin_tx;
+    uint8_t alt_func_tx;
+    uint32_t port_rx;
+    uint8_t pin_rx;
+    uint8_t alt_func_rx;
+    uint8_t irqn;
+    uint32_t baudrate;
+    uint8_t databits;
+    uint32_t stopbits;
+    uint32_t mode;
+    uint32_t parity;
+    uint32_t flowcontrol;
+};
+
+void itoa(int n, char *buf, size_t len);
+
+#define USART3_FIFO_SZ 1024
+struct fifo usart3_fifo_tx;
+uint8_t usart3_array_tx[USART3_FIFO_SZ];
+struct fifo usart3_fifo_rx;
+uint8_t usart3_array_rx[USART3_FIFO_SZ];
+
+static void usart_setup(struct usart_setup_cfg *cfg)
 {
     uint16_t gpio_tx = (1 << cfg->pin_tx);
     uint16_t gpio_rx = (1 << cfg->pin_rx);
@@ -33,6 +66,31 @@ void usart_setup(struct usart_cfg *cfg)
 
     //usart_enable_rx_interrupt(cfg->usart_base);
     usart_enable(cfg->usart_base);
+}
+
+void usart3_setup(void)
+{
+    struct usart_setup_cfg usart3_cfg;
+
+    usart3_cfg.usart_base = USART3;
+    usart3_cfg.clken = RCC_USART3;
+    usart3_cfg.port_tx = PORT_USART3_TX;
+    usart3_cfg.pin_tx = PIN_USART3_TX;
+    usart3_cfg.alt_func_tx = GPIO_AF7;
+    usart3_cfg.port_rx = PORT_USART3_RX;
+    usart3_cfg.pin_rx = PIN_USART3_RX;
+    usart3_cfg.alt_func_rx = GPIO_AF8;
+    usart3_cfg.irqn = NVIC_USART3_IRQ;
+    usart3_cfg.baudrate = 115200;
+    usart3_cfg.databits = 8;
+    usart3_cfg.stopbits = USART_STOPBITS_1;
+    usart3_cfg.mode = USART_MODE_TX_RX;
+    usart3_cfg.parity = USART_PARITY_NONE;
+    usart3_cfg.flowcontrol = USART_FLOWCONTROL_NONE;
+
+    usart_setup(&usart3_cfg);
+    fifo_create(&usart3_fifo_tx, usart3_array_tx, sizeof(usart3_array_tx[0]), USART3_FIFO_SZ);
+    fifo_create(&usart3_fifo_rx, usart3_array_rx, sizeof(usart3_array_rx[0]), USART3_FIFO_SZ);
 }
 
 void usart_send_blocking_str(uint32_t usart_base, const char *str)

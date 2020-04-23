@@ -5,6 +5,7 @@
 
 #include "clock.h"
 #include "usart.h"
+#include "led.h"
 
 #include "api.h"
 #include "api-asm.h"
@@ -19,48 +20,19 @@
 #define PORT_USART3_RX GPIOB
 #define PIN_USART3_RX 12
 
-static void blink(uint8_t n)
-{
-    for (uint8_t i = 0; i < n; ++i)
-    {
-        gpio_set(PORT_LED7, GPIO_LED7);
-        msleep(200);
-        gpio_clear(PORT_LED7, GPIO_LED7);
-        msleep(200);
-    }
-}
-
 int main(void) {
     uint32_t last_ts = 0;
-    struct usart_cfg usart3_cfg;
     uint32_t uart35clksel;
     uint32_t hsidiv;
 
-    usart3_cfg.usart_base = USART3;
-    usart3_cfg.clken = RCC_USART3;
-    usart3_cfg.port_tx = PORT_USART3_TX;
-    usart3_cfg.pin_tx = PIN_USART3_TX;
-    usart3_cfg.alt_func_tx = GPIO_AF7;
-    usart3_cfg.port_rx = PORT_USART3_RX;
-    usart3_cfg.pin_rx = PIN_USART3_RX;
-    usart3_cfg.alt_func_rx = GPIO_AF8;
-    usart3_cfg.irqn = NVIC_USART3_IRQ;
-    usart3_cfg.baudrate = 9600;
-    usart3_cfg.databits = 8;
-    usart3_cfg.stopbits = USART_STOPBITS_1;
-    usart3_cfg.mode = USART_MODE_TX_RX;
-    usart3_cfg.parity = USART_PARITY_NONE;
-    usart3_cfg.flowcontrol = USART_FLOWCONTROL_NONE;
-    usart_setup(&usart3_cfg);
+    usart3_setup();
 
     systick_setup();
-    rcc_periph_clock_enable(RCC_LED7);
-    gpio_mode_setup(PORT_LED7, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, GPIO_LED7);
-    gpio_set_output_options(PORT_LED7, GPIO_OTYPE_PP,
-                            GPIO_OSPEED_25MHZ,  GPIO_LED7);
-    gpio_set(PORT_LED7, GPIO_LED7);
+    led_setup();
+
+    led_on();
     msleep(1000);
-    gpio_clear(PORT_LED7, GPIO_LED7);
+    led_off();
     msleep(1000);
     usart_send_blocking_str(USART3, "Hello World\r\n");
 
@@ -70,25 +42,25 @@ int main(void) {
         if (last_ts + 5000 < mtime()) {
             switch (uart35clksel) {
             case RCC_UART35CKSELR_UART35SRC_PCLK1:
-                blink(1);
+                led_blink(1);
                 break;
             case RCC_UART35CKSELR_UART35SRC_PLL4_Q:
-                blink(2);
+                led_blink(2);
                 break;
             case RCC_UART35CKSELR_UART35SRC_HSI:
-                blink(3);
+                led_blink(3);
                 break;
             case RCC_UART35CKSELR_UART35SRC_CSI:
-                blink(4);
+                led_blink(4);
                 break;
             case RCC_UART35CKSELR_UART35SRC_HSE:
-                blink(5);
+                led_blink(5);
                 break;
             default:
                 break;
             }
             msleep(2000);
-            blink(hsidiv + 1);
+            led_blink(hsidiv + 1);
             usart_send_blocking_str(USART3, "Hop\r\n");
             last_ts = mtime();
 

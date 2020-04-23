@@ -33,3 +33,12 @@ void led_blink(uint8_t n)
     }
 }
 
+void led_on(void)
+{
+    gpio_set(PORT_LED7, GPIO_LED7);
+}
+
+void led_off(void)
+{
+    gpio_clear(PORT_LED7, GPIO_LED7);
+}

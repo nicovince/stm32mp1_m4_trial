@@ -12,39 +12,13 @@
 #include "api.h"
 #include "api-asm.h"
 
-#define RCC_LED7  RCC_GPIOH
-#define PORT_LED7 GPIOH
-#define PIN_LED7  7
-#define GPIO_LED7 (1 << PIN_LED7)
-
-#define PORT_USART3_TX GPIOB
-#define PIN_USART3_TX 10
-#define PORT_USART3_RX GPIOB
-#define PIN_USART3_RX 12
-
 int main(void) {
     uint32_t last_ts = 0;
-    struct usart_cfg usart3_cfg;
     uint32_t spi_data;
     uint32_t cnt = 0;
     uint32_t spi_sr;
 
-    usart3_cfg.usart_base = USART3;
-    usart3_cfg.clken = RCC_USART3;
-    usart3_cfg.port_tx = PORT_USART3_TX;
-    usart3_cfg.pin_tx = PIN_USART3_TX;
-    usart3_cfg.alt_func_tx = GPIO_AF7;
-    usart3_cfg.port_rx = PORT_USART3_RX;
-    usart3_cfg.pin_rx = PIN_USART3_RX;
-    usart3_cfg.alt_func_rx = GPIO_AF8;
-    usart3_cfg.irqn = NVIC_USART3_IRQ;
-    usart3_cfg.baudrate = 115200;
-    usart3_cfg.databits = 8;
-    usart3_cfg.stopbits = USART_STOPBITS_1;
-    usart3_cfg.mode = USART_MODE_TX_RX;
-    usart3_cfg.parity = USART_PARITY_NONE;
-    usart3_cfg.flowcontrol = USART_FLOWCONTROL_NONE;
-    usart_setup(&usart3_cfg);
+    usart3_setup();
 
     systick_setup();
     led_setup();

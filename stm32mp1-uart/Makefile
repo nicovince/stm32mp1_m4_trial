@@ -5,6 +5,8 @@ SHARED_DIR = ../common
 CFILES = main.c
 CFILES += api.c
 CFILES += clock.c
+CFILES += led.c
+CFILES += fifo.c
 CFILES += usart.c
 AFILES += api-asm.S
 
