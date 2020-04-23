@@ -34,6 +34,12 @@ struct usart_setup_cfg
     uint32_t flowcontrol;
 };
 
+struct usart_cfg {
+    struct fifo * rx_fifo;
+    struct fifo * tx_fifo;
+    uint32_t usart;
+};
+
 void itoa(int n, char *buf, size_t len);
 
 #define USART3_FIFO_SZ 1024
@@ -107,11 +113,9 @@ void usart_send_blocking_buf(uint32_t usart_base, const char *str, size_t len)
     }
 }
 
-int usart_send_blocking_printf(uint32_t usart_base, char const *fmt, ...)
+typedef void (*usart_send_fn)(uint32_t, const char *str, size_t len);
+static int usart_send_generic_printf(uint32_t usart_base, usart_send_fn send, const char *fmt, va_list arg)
 {
-    va_list arg;
-    va_start(arg, fmt);
-
     int int_temp;
     char char_temp;
     char *string_temp;
@@ -126,21 +130,21 @@ int usart_send_blocking_printf(uint32_t usart_base, char const *fmt, ...)
             switch (ch = *fmt++) {
                 /* %% - print out a single %    */
             case '%':
-                usart_send_blocking_buf(usart_base, (const char *)'%', 1);
+                send(usart_base, (const char *)'%', 1);
                 length++;
                 break;
 
                 /* %c: print out a character    */
             case 'c':
                 char_temp = va_arg(arg, int);
-                usart_send_blocking_buf(usart_base, (const char *)&char_temp, 1);
+                send(usart_base, (const char *)&char_temp, 1);
                 length++;
                 break;
 
                 /* %s: print out a string       */
             case 's':
                 string_temp = va_arg(arg, char *);
-                usart_send_blocking_buf(usart_base, (const char *)string_temp, strlen(string_temp));
+                send(usart_base, (const char *)string_temp, strlen(string_temp));
                 length += strlen(string_temp);
                 break;
 
@@ -148,7 +152,7 @@ int usart_send_blocking_printf(uint32_t usart_base, char const *fmt, ...)
             case 'd':
                 int_temp = va_arg(arg, int);
                 itoa(int_temp, buffer, 10);
-                usart_send_blocking_buf(usart_base, (const char *)buffer, strlen(buffer));
+                send(usart_base, (const char *)buffer, strlen(buffer));
                 length += strlen(buffer);
                 break;
 
@@ -156,7 +160,7 @@ int usart_send_blocking_printf(uint32_t usart_base, char const *fmt, ...)
             case 'x':
                 int_temp = va_arg(arg, int);
                 itoa(int_temp, buffer, 16);
-                usart_send_blocking_buf(usart_base, (const char *)buffer, strlen(buffer));
+                send(usart_base, (const char *)buffer, strlen(buffer));
                 length += strlen(buffer);
                 break;
 
@@ -164,24 +168,32 @@ int usart_send_blocking_printf(uint32_t usart_base, char const *fmt, ...)
             case 'f':
                 double_temp = va_arg(arg, double);
                 ftoa_fixed(buffer, double_temp);
-                usart_send_blocking_buf(usart_base, buffer, strlen(buffer));
+                send(usart_base, buffer, strlen(buffer));
                 length += strlen(buffer);
                 break;
 
             case 'e':
                 double_temp = va_arg(arg, double);
                 ftoa_sci(buffer, double_temp);
-                usart_send_blocking_buf(usart_base, buffer, strlen(buffer));
+                send(usart_base, buffer, strlen(buffer));
                 length += strlen(buffer);
                 break;
 #endif
             }
         }
         else {
-            usart_send_blocking_buf(usart_base, (const char *)&ch, 1);
+            send(usart_base, (const char *)&ch, 1);
             length++;
         }
     }
     va_end(arg);
     return length;
+}
+
+int usart_send_blocking_printf(uint32_t usart_base, const char *fmt, ...)
+{
+    va_list arg;
+    va_start(arg, fmt);
+
+    return usart_send_generic_printf(usart_base, &usart_send_blocking_buf, fmt, arg);
 }
