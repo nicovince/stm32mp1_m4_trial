@@ -7,6 +7,7 @@
 #include "clock.h"
 #include "usart.h"
 #include "spi.h"
+#include "led.h"
 
 #include "api.h"
 #include "api-asm.h"
@@ -20,17 +21,6 @@
 #define PIN_USART3_TX 10
 #define PORT_USART3_RX GPIOB
 #define PIN_USART3_RX 12
-
-static void blink(uint8_t n)
-{
-    for (uint8_t i = 0; i < n; ++i)
-    {
-        gpio_set(PORT_LED7, GPIO_LED7);
-        msleep(200);
-        gpio_clear(PORT_LED7, GPIO_LED7);
-        msleep(200);
-    }
-}
 
 int main(void) {
     uint32_t last_ts = 0;
@@ -48,7 +38,7 @@ int main(void) {
     usart3_cfg.pin_rx = PIN_USART3_RX;
     usart3_cfg.alt_func_rx = GPIO_AF8;
     usart3_cfg.irqn = NVIC_USART3_IRQ;
-    usart3_cfg.baudrate = 9600;
+    usart3_cfg.baudrate = 115200;
     usart3_cfg.databits = 8;
     usart3_cfg.stopbits = USART_STOPBITS_1;
     usart3_cfg.mode = USART_MODE_TX_RX;
@@ -56,12 +46,8 @@ int main(void) {
     usart3_cfg.flowcontrol = USART_FLOWCONTROL_NONE;
     usart_setup(&usart3_cfg);
 
-
     systick_setup();
-    rcc_periph_clock_enable(RCC_LED7);
-    gpio_mode_setup(PORT_LED7, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, GPIO_LED7);
-    gpio_set_output_options(PORT_LED7, GPIO_OTYPE_PP,
-                            GPIO_OSPEED_25MHZ,  GPIO_LED7);
+    led_setup();
 
     spi4_setup();
     usart_send_blocking_str(USART3, "Hello World\r\n");
@@ -73,7 +59,7 @@ int main(void) {
     while(1) {
         if (last_ts + 5000 < mtime()) {
             usart_send_blocking_printf(USART3, "----- [%d] -----\r\n", mtime());
-            gpio_toggle(PORT_LED7, GPIO_LED7);
+            led_toggle();
             spi_write8(SPI4, cnt++);
             spi_write8(SPI4, cnt++);
             spi_write8(SPI4, cnt++);

@@ -7,6 +7,8 @@ CFILES += api.c
 CFILES += clock.c
 CFILES += usart.c
 CFILES += spi.c
+CFILES += fifo.c
+CFILES += led.c
 AFILES += api-asm.S
 
 # TODO - you will need to edit these two lines!
