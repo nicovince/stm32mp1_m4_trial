@@ -21,7 +21,6 @@ void spi4_setup(void)
     uint16_t spi_out_gpios = (SPI4_NSS_GPIO | SPI4_SCK_GPIO |  SPI4_MOSI_GPIO);
     uint16_t spi_gpios = (spi_out_gpios | SPI4_MISO_GPIO);
 
-    //rcc_set_spi45_clksel(RCCSPI45CKSELR_SPI45SRC_HSI);
     rcc_periph_clock_enable(RCC_SPI4);
     spi_reset(SPI4);
     rcc_periph_clock_enable(RCC_GPIOE);
