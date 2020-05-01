@@ -8,6 +8,19 @@
 If you have an older git, or got ahead of yourself and skipped the ```--recurse-submodules```
 you can fix things by running ```git submodule update --init``` (This is only needed once)
 
+## OpenAMP Compilation
+### libmetal
+```
+cd OpenAMP/libmetal
+mkdir build
+cd build
+cmake ../ -DCMAKE_TOOLCHAIN_FILE=../../mp1.cmake
+make VERBOSE=1 DESTDIR=./output install
+```
+
+### open-amp
+TODO
+
 
 # Board Setup Instructions
 ## Serial console

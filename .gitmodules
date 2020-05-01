@@ -1,3 +1,9 @@
 [submodule "libopencm3"]
 	path = libopencm3
 	url = https://github.com/nicovince/libopencm3
+[submodule "OpenAMP/open-amp"]
+	path = OpenAMP/open-amp
+	url = https://github.com/OpenAMP/open-amp.git
+[submodule "OpenAMP/libmetal"]
+	path = OpenAMP/libmetal
+	url = https://github.com/OpenAMP/libmetal.git
