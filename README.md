@@ -14,12 +14,18 @@ you can fix things by running ```git submodule update --init``` (This is only ne
 cd OpenAMP/libmetal
 mkdir build
 cd build
-cmake ../ -DCMAKE_TOOLCHAIN_FILE=../../mp1.cmake
+cmake ../ -DCMAKE_TOOLCHAIN_FILE=../../mp1.cmake -DWITH_TESTS=OFF -DWITH_DOC=OFF -DWITH_DEFAULT_LOGGER=OFF
 make VERBOSE=1 DESTDIR=./output install
 ```
 
 ### open-amp
-TODO
+```
+cd OpenAMP/open-amp
+mkdir build
+cd build
+cmake ../ -DCMAKE_TOOLCHAIN_FILE=../../mp1_openamp.cmake
+make VERBOSE=1 DESTDIR=./output install
+```
 
 
 # Board Setup Instructions
